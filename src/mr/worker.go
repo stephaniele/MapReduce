@@ -38,24 +38,24 @@ func Worker(mapf func(string, string) []KeyValue,
 	// 1. ask for task
 	for {
 		reply, ok := callMasterForTask(-1, false)
-		if !ok || reply.allTasksAreDone {
+		if !ok || reply.AllTasksAreDone {
 			break
 		}
-		task := reply.todoTask
+		task := reply.TodoTask
 		var err error
-		switch task.taskType {
+		switch task.TaskType {
 		case IsMap:
-			err = doMapTask(mapf, task.inputFile, reply.nReduce, task.taskIndex)
+			err = doMapTask(mapf, task.InputFile, reply.NReduce, task.TaskIndex)
 		case IsReduce:
-			err = doReduceTask(reducef, reply.nMap, task.taskIndex)
+			err = doReduceTask(reducef, reply.NMap, task.TaskIndex)
 		default:
-			fmt.Printf("[DEBUG][WORKER] unknown task type %v \n", task.taskType)
+			fmt.Printf("[DEBUG][WORKER] unknown task type %v \n", task.TaskType)
 		}
 
 		if err != nil {
-			callMasterForTask(task.taskIndex, false)
+			callMasterForTask(task.TaskIndex, false)
 		} else {
-			callMasterForTask(task.taskIndex, true)
+			callMasterForTask(task.TaskIndex, true)
 		}
 	}
 }
@@ -151,16 +151,15 @@ func getIntermediateFileName(mapIndex int, reduceIndex int) string {
 func callMasterForTask(taskIndex int, isDone bool) (reply Reply, ok bool) {
 
 	args := Args{
-		taskIndex: taskIndex,
-		finished:  isDone,
+		TaskIndex: taskIndex,
+		Finished:  isDone,
 	}
 	reply = Reply{}
 
 	// send the RPC request, wait for the reply.
 	ok = call("Master.WorkerRequestHandler", &args, &reply)
 
-	// reply.Y should be 100.
-	fmt.Printf("[INFO][WORKER Reply]task.todoTask %v, is %v \n", reply.todoTask, ok)
+	fmt.Printf("[INFO][WORKER Reply]task.todoTask %v, is %v \n", reply.TodoTask.InputFile, ok)
 	return
 }
 

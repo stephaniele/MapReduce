@@ -23,26 +23,25 @@ const (
 )
 
 type Task struct {
-	taskType   string
-	inputFile  string
-	taskIndex  int //to generate intermediate file name
-	state      string
-	outputFile string //[]string for reduce file
+	TaskType  string
+	InputFile string
+	TaskIndex int //to generate intermediate file name
+	State     string
 
 	//time:how long been working on this task
 
 }
 
 type Args struct {
-	taskIndex int
-	finished  bool
+	TaskIndex int
+	Finished  bool
 }
 
 type Reply struct {
-	todoTask        Task
-	allTasksAreDone bool
-	nReduce         int
-	nMap            int
+	TodoTask        Task
+	AllTasksAreDone bool
+	NReduce         int
+	NMap            int
 }
 
 // Add your RPC definitions here.

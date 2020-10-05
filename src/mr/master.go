@@ -52,24 +52,28 @@ type Master struct {
 // the RPC argument and reply types are defined in rpc.go.
 //
 func (m *Master) WorkerRequestHandler(args *Args, reply *Reply) error {
-	fmt.Print("[INFO][MASTER] start to serve worker's request ...")
-	if args.taskIndex == -1 {
-		task, ok := <-m.tasksChan
+	fmt.Println("[INFO][MASTER] start to serve worker's request ...")
+	if args.TaskIndex == -1 {
+		fmt.Println("[INFO][MASTER] serving request ..")
+		task, ok := <-m.tasksChan //stuck
 		if ok {
-			reply.todoTask = task
-			reply.nReduce = m.nReduce
-			reply.nMap = m.nMap
-
-			m.taskstatus[task.taskIndex].status = TaskIsProcessing
-			m.taskstatus[task.taskIndex].timeoutTime = time.Now().Add(maxTimeout * time.Second)
+			fmt.Println("[INFO][MASTER][Request] taskChan gives task")
+			reply.TodoTask = task
+			reply.NReduce = m.nReduce
+			reply.NMap = m.nMap
+			m.taskstatus[task.TaskIndex].status = TaskIsProcessing
+			m.taskstatus[task.TaskIndex].timeoutTime = time.Now().Add(maxTimeout * time.Second)
 		} else {
-			reply.allTasksAreDone = true
+			fmt.Println("[INFO][MASTER][Request] taskChan Empty")
+			reply.AllTasksAreDone = true
 		}
 	} else {
-		if args.finished {
-			m.taskstatus[args.taskIndex].status = TaskIsCompleted
+		if args.Finished {
+			fmt.Println("[INFO][MASTER][Report] completed")
+			m.taskstatus[args.TaskIndex].status = TaskIsCompleted
 		} else {
-			m.taskstatus[args.taskIndex].status = TaskHasErr
+			fmt.Println("[INFO][MASTER][Report] err")
+			m.taskstatus[args.TaskIndex].status = TaskHasErr
 		}
 	}
 	return nil
@@ -124,7 +128,8 @@ func (m *Master) Done() bool {
 
 	if finished {
 		if m.phase == IsMap {
-			//init reduce tasks
+			fmt.Println("[INFO][MASTER]MAP TASKS DONE")
+			m.initReduceTasks()
 		} else {
 			m.allDone = true
 			close(m.tasksChan)
@@ -138,7 +143,6 @@ func (m *Master) Done() bool {
 
 func (m *Master) initReduceTasks() {
 	m.phase = IsReduce
-	m.allDone = false
 	m.taskstatus = make([]taskInfo, m.nReduce)
 	for i := range m.taskstatus {
 		m.taskstatus[i].status = TaskIsReady
@@ -148,13 +152,13 @@ func (m *Master) initReduceTasks() {
 func (m *Master) addTaskToQueue(taskIndex int) {
 	m.taskstatus[taskIndex].status = TaskInQueue
 	task := Task{
-		taskType:  m.phase,
-		inputFile: "",
-		taskIndex: taskIndex,
+		TaskType:  m.phase,
+		InputFile: "",
+		TaskIndex: taskIndex,
 		//time:how long been working on this task
 	}
 	if m.phase == IsMap {
-		task.inputFile = m.inputFiles[taskIndex]
+		task.InputFile = m.inputFiles[taskIndex]
 	}
 	m.tasksChan <- task
 }
@@ -192,6 +196,7 @@ func MakeMaster(files []string, nReduce int) *Master {
 		m.taskstatus[i].status = TaskIsReady
 	}
 
+	fmt.Printf("[INFO]MASTER STARTED nMap: %v \n", len(files))
 	m.server()
 	return &m
 }
