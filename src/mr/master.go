@@ -15,9 +15,15 @@ type taskState int
 
 const maxTimeout = 10
 
+type FileChunk struct {
+	OffsetStart int
+	OffsetEnd   int
+}
+
 type taskInfo struct {
 	status      taskState
 	timeoutTime time.Time
+	fileChunk   FileChunk
 }
 
 const (
@@ -155,10 +161,11 @@ func (m *Master) addTaskToQueue(taskIndex int) {
 		TaskType:  m.phase,
 		InputFile: "",
 		TaskIndex: taskIndex,
-		//time:how long been working on this task
+		fileChunk: FileChunk{},
 	}
 	if m.phase == IsMap {
 		task.InputFile = m.inputFiles[taskIndex]
+		task.fileChunk = m.taskstatus[taskIndex].fileChunk
 	}
 	m.tasksChan <- task
 }
@@ -183,7 +190,7 @@ func MakeMaster(files []string, nReduce int) *Master {
 	m.nReduce = nReduce
 	m.nMap = len(files)
 	m.mutex = sync.Mutex{}
-	if m.nReduce > m.nMap {
+	if m.nReduce > m.nMap { //todo: # of file chunks
 		m.tasksChan = make(chan Task, m.nReduce)
 	} else {
 		m.tasksChan = make(chan Task, m.nMap)
@@ -191,7 +198,7 @@ func MakeMaster(files []string, nReduce int) *Master {
 	m.phase = IsMap
 
 	//initialize tasks
-	m.taskstatus = make([]taskInfo, m.nMap)
+	m.taskstatus = make([]taskInfo, m.nMap) // todo: # of file chunks
 	for i := range m.taskstatus {
 		m.taskstatus[i].status = TaskIsReady
 	}
@@ -199,4 +206,10 @@ func MakeMaster(files []string, nReduce int) *Master {
 	fmt.Printf("[INFO]MASTER STARTED nMap: %v \n", len(files))
 	m.server()
 	return &m
+}
+
+func (m *Master) getTaskSlices(files []string, sizeEachChunk int) []taskInfo {
+	var tasks []taskInfo
+
+	return tasks
 }

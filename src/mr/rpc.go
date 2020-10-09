@@ -26,10 +26,7 @@ type Task struct {
 	TaskType  string
 	InputFile string
 	TaskIndex int //to generate intermediate file name
-	State     string
-
-	//time:how long been working on this task
-
+	fileChunk FileChunk
 }
 
 type Args struct {
