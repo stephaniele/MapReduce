@@ -25,7 +25,7 @@ func generateFiles(source string, disparitySeed int) []string {
 	//each chunk size
 	fileNames := make([]string, disparitySeed+1)
 	for i := 0; i <= disparitySeed; i++ {
-		fileNames[i] = fmt.Sprintf("input-%d", i)
+		fileNames[i] = fmt.Sprintf("input-%d.txt", i)
 		chunkSize := (sf.Size() * sequence[i]) / sum
 		processFile(sourceFile, fileNames[i], chunkSize)
 	}
