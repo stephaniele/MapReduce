@@ -15,15 +15,12 @@ func main() {
 
 func generateFiles(source string, disparitySeed int) []string {
 	sequence, sum := fibonacci(disparitySeed)
-	//fmt.Println(sequence, sum)
 	//get size
-	//sourceFile, err := os.Stat(source)
 	sourceFile, err := os.Open(source)
 	check(err)
 	defer sourceFile.Close()
 	sf, err := sourceFile.Stat()
 	check(err)
-	//fmt.Printf("The file is %d bytes long", sf.Size())
 
 	//each chunk size
 	fileNames := make([]string, disparitySeed+1)
@@ -60,7 +57,7 @@ func processFile(source *os.File, file string, chunkSize int64) {
 	b := make([]byte, chunkSize)
 
 	offset, err := source.Seek(0, 1)
-	println("offset", offset)
+
 	check(err)
 	n, err := source.Read(b)
 	check(err)
