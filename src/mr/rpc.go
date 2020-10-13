@@ -32,6 +32,7 @@ type Task struct {
 type Args struct {
 	TaskIndex int
 	Finished  bool
+	TaskType  string
 }
 
 type Reply struct {

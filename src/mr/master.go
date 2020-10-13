@@ -58,27 +58,28 @@ type Master struct {
 // the RPC argument and reply types are defined in rpc.go.
 //
 func (m *Master) WorkerRequestHandler(args *Args, reply *Reply) error {
-	fmt.Println("[INFO][MASTER] start to serve worker's request ...")
 	if args.TaskIndex == -1 {
-		fmt.Println("[INFO][MASTER] serving request ..")
+		//fmt.Println("[INFO][MASTER] serving request ..")
 		task, ok := <-m.tasksChan //stuck
 		if ok {
-			fmt.Println("[INFO][MASTER][Request] taskChan gives task")
+			// if m.phase == IsReduce {
+			// 	fmt.Println("index got ", task.TaskIndex)
+			// }
 			reply.TodoTask = task
 			reply.NReduce = m.nReduce
 			reply.NMap = m.nMap
 			m.taskstatus[task.TaskIndex].status = TaskIsProcessing
 			m.taskstatus[task.TaskIndex].timeoutTime = time.Now().Add(maxTimeout * time.Second)
 		} else {
-			fmt.Println("[INFO][MASTER][Request] taskChan Empty")
 			reply.AllTasksAreDone = true
 		}
 	} else {
 		if args.Finished {
-			fmt.Println("[INFO][MASTER][Report] completed")
-			m.taskstatus[args.TaskIndex].status = TaskIsCompleted
+			//fmt.Println("[INFO][MASTER][Report] completed ", args.TaskIndex, " ", args.TaskType)
+			if args.TaskType == m.phase {
+				m.taskstatus[args.TaskIndex].status = TaskIsCompleted
+			}
 		} else {
-			fmt.Println("[INFO][MASTER][Report] err")
 			m.taskstatus[args.TaskIndex].status = TaskHasErr
 		}
 	}
@@ -114,6 +115,7 @@ func (m *Master) Done() bool {
 	defer m.mutex.Unlock()
 	//========= add/remove tasks to chan =========
 	for i, taskInfo := range m.taskstatus {
+		println(" ", m.phase, " ", i, " is ", taskInfo.status)
 		switch taskInfo.status {
 		case TaskIsReady:
 			finished = false
@@ -203,7 +205,6 @@ func MakeMaster(files []string, nReduce int) *Master {
 		m.taskstatus[i].status = TaskIsReady
 	}
 
-	fmt.Printf("[INFO]MASTER STARTED nMap: %v \n", len(files))
 	m.server()
 	return &m
 }

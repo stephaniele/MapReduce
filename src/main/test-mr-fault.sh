@@ -14,63 +14,101 @@ rm -f mr-*
 (cd .. && go build $RACE mrmaster.go) || exit 1
 (cd .. && go build $RACE mrworker.go) || exit 1
 (cd .. && go build $RACE mrsequential.go) || exit 1
+(cd .. && go build $RACE generateInputFiles.go) || exit 1
 
 failed_any=0
 
+../generateInputFiles ../sourceText.txt || exit 1
 
+#input-%d.txt
 # generate the correct output
-../mrsequential ../../mrapps/nocrash.so ../pg*txt || exit 1
-sort mr-out-0 > mr-correct-crash.txt
+../mrsequential ../../mrapps/nocrash.so input*txt || exit 1
+sort mr-out-0 > mr-correct-wc.txt
 rm -f mr-out*
 
-echo '***' Starting crash test.
+# echo '***' Starting map parallelism test.
 
-rm -f mr-done
-(timeout -k 2s 180s ../mrmaster ../pg*txt ; touch mr-done ) &
+# rm -f mr-out* mr-worker*
+
+# timeout -k 2s 180s ../mrmaster ../pg*txt &
+# sleep 1
+
+# timeout -k 2s 180s ../mrworker ../../mrapps/mtiming.so &
+# timeout -k 2s 180s ../mrworker ../../mrapps/mtiming.so
+
+# NT=`cat mr-out* | grep '^times-' | wc -l | sed 's/ //g'`
+# if [ "$NT" != "2" ]
+# then
+#   echo '---' saw "$NT" workers rather than 2
+#   echo '---' map parallelism test: FAIL
+#   failed_any=1
+# fi
+
+# if cat mr-out* | grep '^parallel.* 2' > /dev/null
+# then
+#   echo '---' map parallelism test: PASS
+# else
+#   echo '---' map workers did not run in parallel
+#   echo '---' map parallelism test: FAIL
+#   failed_any=1
+# fi
+
+# wait ; wait
+
+
+# echo '***' Starting reduce parallelism test.
+
+# rm -f mr-out* mr-worker*
+
+# timeout -k 2s 180s ../mrmaster input*txt &
+# sleep 1
+
+# timeout -k 2s 180s ../mrworker ../../mrapps/rtiming.so &
+# timeout -k 2s 180s ../mrworker ../../mrapps/rtiming.so
+
+# NT=`cat mr-out* | grep '^[a-z] 2' | wc -l | sed 's/ //g'`
+# if [ "$NT" -lt "2" ]
+# then
+#   echo '---' too few parallel reduces.
+#   echo '---' reduce parallelism test: FAIL
+#   failed_any=1
+# else
+#   echo '---' reduce parallelism test: PASS
+# fi
+
+# wait ; wait
+
+echo '***' Starting wc test.
+
+timeout -k 2s 180s ../mrmaster input*txt &
+
+# give the master time to create the sockets.
 sleep 1
 
-# start multiple workers
-timeout -k 2s 180s ../mrworker ../../mrapps/crash.so &
+# start multiple workers.
+timeout -k 2s 180s ../mrworker ../../mrapps/wc.so &
+timeout -k 2s 180s ../mrworker ../../mrapps/wc.so &
+timeout -k 2s 180s ../mrworker ../../mrapps/wc.so &
 
-# mimic rpc.go's masterSock()
-SOCKNAME=/var/tmp/824-mr-`id -u`
-
-( while [ -e $SOCKNAME -a ! -f mr-done ]
-  do
-    timeout -k 2s 180s ../mrworker ../../mrapps/crash.so
-    sleep 1
-  done ) &
-
-( while [ -e $SOCKNAME -a ! -f mr-done ]
-  do
-    timeout -k 2s 180s ../mrworker ../../mrapps/crash.so
-    sleep 1
-  done ) &
-
-while [ -e $SOCKNAME -a ! -f mr-done ]
-do
-  timeout -k 2s 180s ../mrworker ../../mrapps/crash.so
-  sleep 1
-done
-
-wait
-wait
+# wait for one of the processes to exit.
+# under bash, this waits for all processes,
+# including the master.
 wait
 
-rm $SOCKNAME
-sort mr-out* | grep . > mr-crash-all
-if cmp mr-crash-all mr-correct-crash.txt
+# the master or a worker has exited. since workers are required
+# to exit when a job is completely finished, and not before,
+# that means the job has finished.
+
+sort mr-out* | grep . > mr-wc-all
+if cmp mr-wc-all mr-correct-wc.txt
 then
-  echo '---' crash test: PASS
+  echo '---' wc test: PASS
 else
-  echo '---' crash output is not the same as mr-correct-crash.txt
-  echo '---' crash test: FAIL
+  echo '---' wc output is not the same as mr-correct-wc.txt
+  echo '---' wc test: FAIL
   failed_any=1
 fi
 
-if [ $failed_any -eq 0 ]; then
-    echo '***' PASSED ALL TESTS
-else
-    echo '***' FAILED SOME TESTS
-    exit 1
-fi
+# wait for remaining workers and master to exit.
+wait ; wait ; wait
+

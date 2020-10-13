@@ -11,6 +11,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"time"
 
@@ -23,10 +24,12 @@ func main() {
 		os.Exit(1)
 	}
 
+	start := time.Now()
 	m := mr.MakeMaster(os.Args[1:], 10)
 	for m.Done() == false {
 		time.Sleep(time.Second)
 	}
-
+	elapsed := time.Since(start)
+	log.Printf("Binomial took %s", elapsed)
 	time.Sleep(time.Second)
 }

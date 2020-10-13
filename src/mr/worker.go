@@ -37,7 +37,7 @@ func Worker(mapf func(string, string) []KeyValue,
 
 	// 1. ask for task
 	for {
-		reply, ok := callMasterForTask(-1, false)
+		reply, ok := callMasterForTask(-1, false, "no")
 		if !ok || reply.AllTasksAreDone {
 			break
 		}
@@ -53,15 +53,15 @@ func Worker(mapf func(string, string) []KeyValue,
 		}
 
 		if err != nil {
-			callMasterForTask(task.TaskIndex, false)
+			callMasterForTask(task.TaskIndex, false, task.TaskType)
 		} else {
-			callMasterForTask(task.TaskIndex, true)
+			callMasterForTask(task.TaskIndex, true, task.TaskType)
 		}
 	}
 }
 
 func doReduceTask(reducef func(string, []string) string, nMap int, taskIndex int) error {
-	fmt.Println("[INFO][WORKER] start doing reduce task...")
+	//fmt.Println("[INFO][WORKER] start doing reduce task...")
 	kvMap := make(map[string][]string)
 	for i := 0; i < nMap; i++ {
 		fileName := getIntermediateFileName(i, taskIndex)
@@ -109,7 +109,7 @@ func doReduceTask(reducef func(string, []string) string, nMap int, taskIndex int
 }
 
 func doMapTask(mapf func(string, string) []KeyValue, filename string, nReduce int, taskIndex int) error {
-	fmt.Println("[INFO][WORKER] start doing map task...")
+	//fmt.Println("[INFO][WORKER] start doing map task...")
 	file, err := os.Open(filename)
 	if err != nil {
 		log.Fatalf("cannot open %v", filename)
@@ -148,18 +148,19 @@ func getIntermediateFileName(mapIndex int, reduceIndex int) string {
 	return fmt.Sprintf("mr-%d-%d", mapIndex, reduceIndex)
 }
 
-func callMasterForTask(taskIndex int, isDone bool) (reply Reply, ok bool) {
+func callMasterForTask(taskIndex int, isDone bool, phase string) (reply Reply, ok bool) {
 
 	args := Args{
 		TaskIndex: taskIndex,
 		Finished:  isDone,
+		TaskType:  phase,
 	}
 	reply = Reply{}
 
 	// send the RPC request, wait for the reply.
 	ok = call("Master.WorkerRequestHandler", &args, &reply)
 
-	fmt.Printf("[INFO][WORKER Reply]task.todoTask %v, is %v \n", reply.TodoTask.InputFile, ok)
+	//fmt.Printf("[INFO][WORKER Reply]task.todoTask %v, is %v \n", reply.TodoTask.InputFile, ok)
 	return
 }
 

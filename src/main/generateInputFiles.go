@@ -7,8 +7,11 @@ import (
 )
 
 func main() {
-	//files := []string{"tt", "pg-being_ernest.txt", "pg-dorian_gray.txt"}
-	sourceFile := "tt"
+	if len(os.Args) < 1 {
+		fmt.Fprintf(os.Stderr, "Usage: generateinputFiles needs a source file...\n")
+		os.Exit(1)
+	}
+	sourceFile := os.Args[1]
 	generateFiles(sourceFile, 1)
 
 }
@@ -56,12 +59,11 @@ func processFile(source *os.File, file string, chunkSize int64) {
 
 	b := make([]byte, chunkSize)
 
-	offset, err := source.Seek(0, 1)
+	_, err = source.Seek(0, 1)
 
 	check(err)
 	n, err := source.Read(b)
 	check(err)
-	println(string(b[:n]))
 	_, err = f.Write(b[:n])
 	check(err)
 }
