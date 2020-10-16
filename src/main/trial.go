@@ -8,43 +8,8 @@ import (
 
 func main() {
 	files := []string{"tt", "pg-being_ernest.txt", "pg-dorian_gray.txt"}
-	var sizeEachChunk int64 = 15
+	var sizeEachChunk int64 = 50
 
-	//tasks := make([]taskInfo, 100)
-	//for _, file := range files {
-
-	// f, err := os.Open(files[0])
-	// check(err)
-
-	// o2, err := f.Seek(6, 0)
-	// check(err)
-
-	// b2 := make([]byte, sizeEachChunk)
-	// n2, err := f.Read(b2)
-	// check(err)
-
-	// index := getOffsetEnd(n2, b2[:n2])
-	// fmt.Printf("%s bytes @ %d: %s ", b2[:], o2, b2[:index])
-
-	// f.Close()
-	//}
-
-	// f, err := os.Open(files[0])
-	// check(err)
-
-	// o2, err := f.Seek(6, 0)
-	// check(err)
-
-	// b2 := make([]byte, sizeEachChunk)
-
-	// n2, err := f.Read(b2)
-	// check(err)
-	// fmt.Printf("%s bytes @ %d: %d \n", b2[:n2], o2, n2)
-
-	// o2, err = f.Seek(2, 0)
-	// n2, err = f.Read(b2)
-	// check(err)
-	// fmt.Printf("%s bytes @ %d: %d \n", b2[:n2], o2, n2)
 	processFile(files[0], sizeEachChunk)
 
 }
@@ -52,18 +17,24 @@ func main() {
 func processFile(file string, chunkSize int64) {
 	f, err := os.Open(file)
 	check(err)
-	b := make([]byte, chunkSize)
 	var offset int64 = 0
 	for {
+		b := make([]byte, chunkSize)
 		_, err1 := f.Seek(offset, 0)
 		check(err1)
 		n, err2 := f.Read(b)
-		if err2 != nil {
+
+		// ends at punctuation or space at the end of file
+		if (n == 1){
 			break
 		}
-		end := getOffsetEnd(chunkSize, b[:])
+		if err2 != nil {
+			check(err2)
+		}
+		end := getOffsetEnd(int64(n), b[:])
 		fmt.Printf("%v - %v |%s|%s|%s| end: %v \n", offset, offset+end-1, b[:end], b[:n], b[:], end)
 		offset += end
+
 	}
 	f.Close()
 }
@@ -72,7 +43,7 @@ func processFile(file string, chunkSize int64) {
 func getOffsetEnd(n int64, chunk []uint8) int64 {
 	for i := n - 1; i >= 0; i-- {
 		if !unicode.IsLetter(rune(chunk[:][i])) {
-			//fmt.Printf(" %#U -- %d %d\n", rune(chunk[:][i]), i, n)
+			fmt.Printf(" NOT LETTER: %#U -- %d %d\n", rune(chunk[:][i]), i, n)
 			return int64(i)
 		}
 	}

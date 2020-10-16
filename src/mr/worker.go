@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"hash/fnv"
-	"io/ioutil"
 	"log"
 	"net/rpc"
 	"os"
@@ -45,7 +44,7 @@ func Worker(mapf func(string, string) []KeyValue,
 		var err error
 		switch task.TaskType {
 		case IsMap:
-			err = doMapTask(mapf, task.InputFile, reply.NReduce, task.TaskIndex)
+			err = doMapTask(mapf, task.InputFile, task.fileChunk, reply.NReduce, task.TaskIndex)
 		case IsReduce:
 			err = doReduceTask(reducef, reply.NMap, task.TaskIndex)
 		default:
@@ -108,14 +107,17 @@ func doReduceTask(reducef func(string, []string) string, nMap int, taskIndex int
 	return nil
 }
 
-func doMapTask(mapf func(string, string) []KeyValue, filename string, nReduce int, taskIndex int) error {
+func doMapTask(mapf func(string, string) []KeyValue, filename string, chunk ChunkInfo, nReduce int, taskIndex int) error {
 	//fmt.Println("[INFO][WORKER] start doing map task...")
 	file, err := os.Open(filename)
 	if err != nil {
 		log.Fatalf("cannot open %v", filename)
 		return err
 	}
-	content, err := ioutil.ReadAll(file)
+
+	b := make([]byte, chunk.ChunkSize)
+
+	content, err := file.ReadAt(b,chunk.OffsetStart)
 	if err != nil {
 		log.Fatalf("cannot read %v", filename)
 		return err
