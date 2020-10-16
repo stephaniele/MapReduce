@@ -1,4 +1,0 @@
-a input-0.txt input-1.txt
-b 11 11
-c 1650554 1650554
-d xyzzy xyzzy
