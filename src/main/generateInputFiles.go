@@ -3,16 +3,18 @@ package main
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"unicode"
 )
 
 func main() {
-	if len(os.Args) < 1 {
-		fmt.Fprintf(os.Stderr, "Usage: generateinputFiles needs a source file...\n")
+	if len(os.Args) < 2 {
+		fmt.Fprintf(os.Stderr, "Usage: generateinputFiles needs a source file and an 'eveness' number...\n")
 		os.Exit(1)
 	}
 	sourceFile := os.Args[1]
-	generateFiles(sourceFile, 1)
+	v, _ := strconv.Atoi(os.Args[2])
+	generateFiles(sourceFile, v)
 
 }
 

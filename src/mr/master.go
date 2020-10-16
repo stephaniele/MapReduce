@@ -115,7 +115,6 @@ func (m *Master) Done() bool {
 	defer m.mutex.Unlock()
 	//========= add/remove tasks to chan =========
 	for i, taskInfo := range m.taskstatus {
-		println(" ", m.phase, " ", i, " is ", taskInfo.status)
 		switch taskInfo.status {
 		case TaskIsReady:
 			finished = false
@@ -136,7 +135,7 @@ func (m *Master) Done() bool {
 
 	if finished {
 		if m.phase == IsMap {
-			fmt.Println("[INFO][MASTER]MAP TASKS DONE")
+			//fmt.Println("[INFO][MASTER]MAP TASKS DONE")
 			m.initReduceTasks()
 		} else {
 			m.allDone = true

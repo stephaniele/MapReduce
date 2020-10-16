@@ -30,6 +30,6 @@ func main() {
 		time.Sleep(time.Second)
 	}
 	elapsed := time.Since(start)
-	log.Printf("Binomial took %s", elapsed)
+	log.Printf("%s", elapsed)
 	time.Sleep(time.Second)
 }

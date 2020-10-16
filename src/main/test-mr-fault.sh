@@ -18,13 +18,36 @@ rm -f mr-*
 
 failed_any=0
 
-../generateInputFiles ../sourceText.txt || exit 1
+runMapReduce (){
+  timeout -k 2s 180s ../mrmaster input*txt &
+
+  # give the master time to create the sockets.
+  sleep 1
+
+  # start multiple workers.
+  timeout -k 2s 180s ../mrworker ../../mrapps/wc.so &
+  timeout -k 2s 180s ../mrworker ../../mrapps/wc.so &
+  timeout -k 2s 180s ../mrworker ../../mrapps/wc.so 
+
+  wait
+
+  wait ; wait ; wait
+
+}
+
+for eveness in 1 3 5 7 9
+do
+  ../generateInputFiles ../sourceText.txt $eveness|| exit 1
+  runMapReduce
+  rm -f mr-*
+  rm -f input-*
+done
 
 #input-%d.txt
 # generate the correct output
-../mrsequential ../../mrapps/nocrash.so input*txt || exit 1
-sort mr-out-0 > mr-correct-wc.txt
-rm -f mr-out*
+# ../mrsequential ../../mrapps/nocrash.so input*txt || exit 1
+# sort mr-out-0 > mr-correct-wc.txt
+# rm -f mr-out*
 
 # echo '***' Starting map parallelism test.
 
@@ -78,37 +101,22 @@ rm -f mr-out*
 
 # wait ; wait
 
-echo '***' Starting wc test.
-
-timeout -k 2s 180s ../mrmaster input*txt &
-
-# give the master time to create the sockets.
-sleep 1
-
-# start multiple workers.
-timeout -k 2s 180s ../mrworker ../../mrapps/wc.so &
-timeout -k 2s 180s ../mrworker ../../mrapps/wc.so &
-timeout -k 2s 180s ../mrworker ../../mrapps/wc.so &
-
 # wait for one of the processes to exit.
 # under bash, this waits for all processes,
 # including the master.
-wait
+
 
 # the master or a worker has exited. since workers are required
 # to exit when a job is completely finished, and not before,
 # that means the job has finished.
 
-sort mr-out* | grep . > mr-wc-all
-if cmp mr-wc-all mr-correct-wc.txt
-then
-  echo '---' wc test: PASS
-else
-  echo '---' wc output is not the same as mr-correct-wc.txt
-  echo '---' wc test: FAIL
-  failed_any=1
-fi
-
-# wait for remaining workers and master to exit.
-wait ; wait ; wait
+#sort mr-out* | grep . > mr-wc-all
+# if cmp mr-wc-all mr-correct-wc.txt
+# then
+#   echo '---' wc test: PASS
+# else
+#   echo '---' wc output is not the same as mr-correct-wc.txt
+#   echo '---' wc test: FAIL
+#   failed_any=1
+# fi
 
