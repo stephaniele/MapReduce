@@ -15,24 +15,26 @@ type taskState int
 
 const maxTimeout = 10
 
-type FileChunk struct {
+type ChunkInfo struct {
 	OffsetStart int
-	OffsetEnd   int
+	ChunkSize   int
 }
 
 type taskInfo struct {
 	status      taskState
 	timeoutTime time.Time
-	fileChunk   FileChunk
+	fileName string
+	chunkInfo   ChunkInfo
 }
 
 const (
 	TaskIsReady      taskState = 0
 	TaskInQueue      taskState = 1
 	TaskIsProcessing taskState = 2
-	TaskIsCompleted  taskState = 3
+	TaskIsCompleted  taskState = 3	
 	TaskHasErr       taskState = 4
 )
+
 
 type Master struct {
 	// Your definitions here.
@@ -162,11 +164,12 @@ func (m *Master) addTaskToQueue(taskIndex int) {
 		TaskType:  m.phase,
 		InputFile: "",
 		TaskIndex: taskIndex,
-		fileChunk: FileChunk{},
+		chunkInfo: ChunkInfo{},
 	}
 	if m.phase == IsMap {
 		task.InputFile = m.inputFiles[taskIndex]
-		task.fileChunk = m.taskstatus[taskIndex].fileChunk
+		task.fileChunk = m.taskstatus[taskIndex].chunkInfo
+		task.InputFile = m.taskstatus[taskIndex].fileName
 	}
 	m.tasksChan <- task
 }
@@ -198,8 +201,8 @@ func MakeMaster(files []string, nReduce int) *Master {
 	}
 	m.phase = IsMap
 
-	//initialize tasks
-	m.taskstatus = make([]taskInfo, m.nMap) // todo: # of file chunks
+	//initialize tasks with chosen chunk size
+	m.taskstatus = makeTaskSlices(files,50)
 	for i := range m.taskstatus {
 		m.taskstatus[i].status = TaskIsReady
 	}
@@ -208,8 +211,82 @@ func MakeMaster(files []string, nReduce int) *Master {
 	return &m
 }
 
-func (m *Master) getTaskSlices(files []string, sizeEachChunk int) []taskInfo {
+
+func (m *Master) makeTaskSlices(files []string, sizeEachChunk int) []taskInfo{
 	var tasks []taskInfo
+
+	for _,file := range files {
+		chunks := sliceOneFile(file, sizeEachChunk)
+		for _,chunk := range chunks {
+			info := taskInfo{
+				status: TaskIsReady,
+				fileName: file,
+				chunkInfo: chunk
+			}
+			tasks = append(tasks,info)
+		}
+	}
 
 	return tasks
 }
+
+func sliceOneFile(file string, sizeEachChunk int) []ChunkInfo{
+
+	var chunkInfos []ChunkInfo
+
+	f, err := os.Open(file)
+	check(err)
+	var offset int64 = 0
+	for {
+		b := make([]byte, chunkSize)
+		_, err1 := f.Seek(offset, 0)
+		check(err1)
+		n, err2 := f.Read(b)
+
+		// ends at punctuation or space at the end of file
+		if (n == 1){
+			break
+		}
+		if err2 != nil {
+			check(err2)
+		}
+		end := getOffsetEnd(int64(n), b[:])
+		fmt.Printf("%v - %v |%s|%s|%s| end: %v \n", offset, offset+end-1, b[:end], b[:n], b[:], end)
+
+		chunkInfo := ChunkInfo{
+			OffsetStart: offset
+			OffsetEnd: offset+end-1
+		}
+
+		chunkInfos = append(chunkInfos, chunkInfos)
+
+		offset += end
+
+	}
+
+	f.Close()
+
+	return chunkInfos
+
+}
+
+
+//offset end : exclusive
+func getOffsetEnd(n int64, chunk []uint8) int64 {
+	for i := n - 1; i >= 0; i-- {
+		if !unicode.IsLetter(rune(chunk[:][i])) {
+			//fmt.Printf(" %#U -- %d %d\n", rune(chunk[:][i]), i, n)
+			return int64(i)
+		}
+	}
+	fmt.Printf("%s\n", chunk[:n])
+	return 0
+}
+
+func check(e error) {
+	if e != nil {
+		fmt.Println("||||||||||||||||")
+		panic(e)
+	}
+}
+
