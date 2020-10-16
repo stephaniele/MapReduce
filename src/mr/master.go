@@ -9,6 +9,7 @@ import (
 	"os"
 	"sync"
 	"time"
+	"unicode"
 )
 
 type taskState int
@@ -16,7 +17,7 @@ type taskState int
 const maxTimeout = 10
 
 type ChunkInfo struct {
-	OffsetStart int
+	OffsetStart int64
 	ChunkSize   int
 }
 
@@ -164,7 +165,7 @@ func (m *Master) addTaskToQueue(taskIndex int) {
 		TaskType:  m.phase,
 		InputFile: "",
 		TaskIndex: taskIndex,
-		chunkInfo: ChunkInfo{},
+		fileChunk: ChunkInfo{},
 	}
 	if m.phase == IsMap {
 		task.InputFile = m.inputFiles[taskIndex]
@@ -212,7 +213,7 @@ func MakeMaster(files []string, nReduce int) *Master {
 }
 
 
-func (m *Master) makeTaskSlices(files []string, sizeEachChunk int) []taskInfo{
+func makeTaskSlices(files []string, sizeEachChunk int) []taskInfo{
 	var tasks []taskInfo
 
 	for _,file := range files {
@@ -221,7 +222,7 @@ func (m *Master) makeTaskSlices(files []string, sizeEachChunk int) []taskInfo{
 			info := taskInfo{
 				status: TaskIsReady,
 				fileName: file,
-				chunkInfo: chunk
+				chunkInfo: chunk,
 			}
 			tasks = append(tasks,info)
 		}
@@ -238,7 +239,7 @@ func sliceOneFile(file string, sizeEachChunk int) []ChunkInfo{
 	check(err)
 	var offset int64 = 0
 	for {
-		b := make([]byte, chunkSize)
+		b := make([]byte, sizeEachChunk)
 		_, err1 := f.Seek(offset, 0)
 		check(err1)
 		n, err2 := f.Read(b)
@@ -248,17 +249,17 @@ func sliceOneFile(file string, sizeEachChunk int) []ChunkInfo{
 			break
 		}
 		if err2 != nil {
-			check(err2)
+			break
 		}
 		end := getOffsetEnd(int64(n), b[:])
-		fmt.Printf("%v - %v |%s|%s|%s| end: %v \n", offset, offset+end-1, b[:end], b[:n], b[:], end)
+		// fmt.Printf("%v - %v |%s|%s|%s| end: %v \n", offset, offset+end-1, b[:end], b[:n], b[:], end)
 
 		chunkInfo := ChunkInfo{
-			OffsetStart: offset
-			OffsetEnd: offset+end-1
+			OffsetStart: offset,
+			ChunkSize: sizeEachChunk,
 		}
 
-		chunkInfos = append(chunkInfos, chunkInfos)
+		chunkInfos = append(chunkInfos, chunkInfo)
 
 		offset += end
 

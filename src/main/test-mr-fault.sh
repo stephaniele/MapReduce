@@ -35,7 +35,7 @@ runMapReduce (){
 
 }
 
-for eveness in 1 3 5 7 9
+for eveness in 4 10 30 100 1000
 do
   ../generateInputFiles ../sourceText.txt $eveness|| exit 1
   runMapReduce

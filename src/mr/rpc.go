@@ -26,7 +26,7 @@ type Task struct {
 	TaskType  string
 	InputFile string
 	TaskIndex int //to generate intermediate file name
-	fileChunk FileChunk
+	fileChunk ChunkInfo
 }
 
 type Args struct {
