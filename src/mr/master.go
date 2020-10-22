@@ -142,7 +142,7 @@ func (m *Master) Done() bool {
 
 	if finished {
 		if m.phase == IsMap {
-			fmt.Println("[INFO][MASTER]MAP TASKS DONE")
+			//fmt.Println("[INFO][MASTER]MAP TASKS DONE")
 			m.initReduceTasks()
 		} else {
 			m.allDone = true
