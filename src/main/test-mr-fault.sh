@@ -27,20 +27,22 @@ runMapReduce (){
   # start multiple workers.
   timeout -k 2s 180s ../mrworker ../../mrapps/wc.so &
   timeout -k 2s 180s ../mrworker ../../mrapps/wc.so &
-  timeout -k 2s 180s ../mrworker ../../mrapps/wc.so 
+  timeout -k 2s 180s ../mrworker ../../mrapps/wc.so
 
   wait
 
   wait ; wait ; wait
 
 }
-
-for eveness in 4 10 30 100 1000
+#500 400 300 200 100 50 15 4
+for eveness in 500 400 300 200 100 50 15 4
 do
-  ../generateInputFiles ../sourceText.txt $eveness|| exit 1
-  runMapReduce
-  rm -f mr-*
-  rm -f input-*
+  echo '***' eveness is $eveness
+  for i in 0 1 2 3 4 5 6 7 8 9 
+  do
+    ../generateInputFiles ../sourceText.txt $eveness|| exit 1
+    runMapReduce
+  done
 done
 
 #input-%d.txt
@@ -119,4 +121,5 @@ done
 #   echo '---' wc test: FAIL
 #   failed_any=1
 # fi
+
 
