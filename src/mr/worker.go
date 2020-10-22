@@ -41,6 +41,7 @@ func Worker(mapf func(string, string) []KeyValue,
 			break
 		}
 		task := reply.TodoTask
+		fmt.Printf("Worker received task from file %v, at file offset %v, chunk size %v, and task index is %v \n", task.InputFile, task.fileChunk.OffsetStart, task.fileChunk.ChunkSize, task.TaskIndex)
 		var err error
 		switch task.TaskType {
 		case IsMap:
@@ -108,20 +109,22 @@ func doReduceTask(reducef func(string, []string) string, nMap int, taskIndex int
 }
 
 func doMapTask(mapf func(string, string) []KeyValue, filename string, chunk ChunkInfo, nReduce int, taskIndex int) error {
-	//fmt.Println("[INFO][WORKER] start doing map task...")
+	// printl("READING ", chunk.ChunkSize, "BYTES", " FROM FILE NAME: ", filename, "AT START POINT: ", chunk.OffsetStart, "\n")
 	file, err := os.Open(filename)
 	if err != nil {
 		log.Fatalf("cannot open %v", filename)
 		return err
 	}
 
-	b := make([]byte, chunk.ChunkSize)
+	content := make([]byte, chunk.ChunkSize)
 
-	content, err := file.ReadAt(b,chunk.OffsetStart)
-	if err != nil {
+	_, err2 := file.ReadAt(content,chunk.OffsetStart)
+	fmt.Println("CONTENT READ: ", string(content))
+	if err2 != nil {
 		log.Fatalf("cannot read %v", filename)
-		return err
+		return err2
 	}
+	// fmt.Print("CONTENT READ: ", string(content))
 	file.Close()
 	kva := mapf(filename, string(content))
 

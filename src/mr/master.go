@@ -69,6 +69,8 @@ func (m *Master) WorkerRequestHandler(args *Args, reply *Reply) error {
 			// 	fmt.Println("index got ", task.TaskIndex)
 			// }
 			reply.TodoTask = task
+			fmt.Printf("Task number %v from file %v with offset %v taken from queue \n", task.TaskIndex, task.InputFile, task.fileChunk.OffsetStart)
+
 			reply.NReduce = m.nReduce
 			reply.NMap = m.nMap
 			m.taskstatus[task.TaskIndex].status = TaskIsProcessing
@@ -93,6 +95,7 @@ func (m *Master) WorkerRequestHandler(args *Args, reply *Reply) error {
 // start a thread that listens for RPCs from worker.go
 //
 func (m *Master) server() {
+	fmt.Println("SERVER IS UP")
 	rpc.Register(m)
 	rpc.HandleHTTP()
 	//l, e := net.Listen("tcp", ":1234")
@@ -118,9 +121,9 @@ func (m *Master) Done() bool {
 	defer m.mutex.Unlock()
 	//========= add/remove tasks to chan =========
 	for i, taskInfo := range m.taskstatus {
-		println(" ", m.phase, " ", i, " is ", taskInfo.status)
 		switch taskInfo.status {
 		case TaskIsReady:
+			// println(i, "calling Add Task to Queue")
 			finished = false
 			m.addTaskToQueue(i)
 		case TaskInQueue:
@@ -162,18 +165,21 @@ func (m *Master) initReduceTasks() {
 
 func (m *Master) addTaskToQueue(taskIndex int) {
 	m.taskstatus[taskIndex].status = TaskInQueue
+
 	task := Task{
 		TaskType:  m.phase,
-		InputFile: "",
 		TaskIndex: taskIndex,
-		fileChunk: ChunkInfo{},
 	}
 	if m.phase == IsMap {
-		task.InputFile = m.inputFiles[taskIndex]
-		task.fileChunk = m.taskstatus[taskIndex].chunkInfo
 		task.InputFile = m.taskstatus[taskIndex].fileName
+		task.fileChunk = m.taskstatus[taskIndex].chunkInfo
 	}
+
 	m.tasksChan <- task
+
+	fmt.Printf("Task number %v from file %v with offset %v added to queue \n", task.TaskIndex, task.InputFile, task.fileChunk.OffsetStart)
+
+
 }
 
 func (m *Master) checkTaskNotExpire(taskIndex int) {
@@ -193,8 +199,11 @@ func MakeMaster(files []string, nReduce int) *Master {
 	// Your code here.
 	//initialize m
 	m.inputFiles = files
+	//initialize tasks with chosen chunk size
+	m.taskstatus = makeTaskSlices(files,2000)
 	m.nReduce = nReduce
-	m.nMap = len(files)
+	println("Number of map tasks: ", len(m.taskstatus), "\n")
+	m.nMap = len(m.taskstatus)
 	m.mutex = sync.Mutex{}
 	if m.nReduce > m.nMap { //todo: # of file chunks
 		m.tasksChan = make(chan Task, m.nReduce)
@@ -203,8 +212,6 @@ func MakeMaster(files []string, nReduce int) *Master {
 	}
 	m.phase = IsMap
 
-	//initialize tasks with chosen chunk size
-	m.taskstatus = makeTaskSlices(files,50)
 	for i := range m.taskstatus {
 		m.taskstatus[i].status = TaskIsReady
 	}
@@ -253,7 +260,6 @@ func sliceOneFile(file string, sizeEachChunk int) []ChunkInfo{
 			break
 		}
 		end := getOffsetEnd(int64(n), b[:])
-		// fmt.Printf("%v - %v |%s|%s|%s| end: %v \n", offset, offset+end-1, b[:end], b[:n], b[:], end)
 
 		chunkInfo := ChunkInfo{
 			OffsetStart: offset,
