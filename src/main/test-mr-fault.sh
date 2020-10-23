@@ -26,8 +26,7 @@ runMapReduce (){
 
   # start multiple workers.
   timeout -k 2s 180s ../mrworker ../../mrapps/wc.so &
-  timeout -k 2s 180s ../mrworker ../../mrapps/wc.so &
-  timeout -k 2s 180s ../mrworker ../../mrapps/wc.so
+  timeout -k 2s 180s ../mrworker ../../mrapps/wc.so 
 
   wait
 
@@ -35,6 +34,7 @@ runMapReduce (){
 
 }
 #500 400 300 200 100 50 15 4
+# 4 15 50 100 200 300 400 500
 for eveness in 500 400 300 200 100 50 15 4
 do
   echo '***' eveness is $eveness
@@ -42,6 +42,7 @@ do
   do
     ../generateInputFiles ../sourceText.txt $eveness|| exit 1
     runMapReduce
+    find  . -name 'mr-*' -exec rm {} \;
   done
 done
 
