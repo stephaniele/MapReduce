@@ -81,6 +81,9 @@ func processFile(source *os.File, file string, chunkSize uint64) {
 	check(err)
 	_, err = f.Write(b[:n])
 	check(err)
+
+	_, err = f.Write([]byte("."))
+	check(err)
 }
 
 //offset end : exclusive
