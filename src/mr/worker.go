@@ -41,7 +41,7 @@ func Worker(mapf func(string, string) []KeyValue,
 			break
 		}
 		task := reply.TodoTask
-		fmt.Printf("Worker received task from file %v, at file offset %v, chunk size %v, and task index is %v \n", task.InputFile, task.FileChunk.OffsetStart, task.FileChunk.ChunkSize, task.TaskIndex)
+		// fmt.Printf("Worker received task from file %v, at file offset %v, chunk size %v, and task index is %v \n", task.InputFile, task.FileChunk.OffsetStart, task.FileChunk.ChunkSize, task.TaskIndex)
 		var err error
 		switch task.TaskType {
 		case IsMap:
