@@ -41,11 +41,11 @@ func Worker(mapf func(string, string) []KeyValue,
 			break
 		}
 		task := reply.TodoTask
-		fmt.Printf("Worker received task from file %v, at file offset %v, chunk size %v, and task index is %v \n", task.InputFile, task.fileChunk.OffsetStart, task.fileChunk.ChunkSize, task.TaskIndex)
+		// fmt.Printf("Worker received task from file %v, at file offset %v, chunk size %v, and task index is %v \n", task.InputFile, task.FileChunk.OffsetStart, task.FileChunk.ChunkSize, task.TaskIndex)
 		var err error
 		switch task.TaskType {
 		case IsMap:
-			err = doMapTask(mapf, task.InputFile, task.fileChunk, reply.NReduce, task.TaskIndex)
+			err = doMapTask(mapf, task.InputFile, task.FileChunk, reply.NReduce, task.TaskIndex)
 		case IsReduce:
 			err = doReduceTask(reducef, reply.NMap, task.TaskIndex)
 		default:
@@ -119,10 +119,8 @@ func doMapTask(mapf func(string, string) []KeyValue, filename string, chunk Chun
 	content := make([]byte, chunk.ChunkSize)
 
 	_, err2 := file.ReadAt(content,chunk.OffsetStart)
-	fmt.Println("CONTENT READ: ", string(content))
 	if err2 != nil {
-		log.Fatalf("cannot read %v", filename)
-		return err2
+		fmt.Printf("cannot read %v because of %v", filename, err2)
 	}
 	// fmt.Print("CONTENT READ: ", string(content))
 	file.Close()

@@ -65,11 +65,8 @@ func (m *Master) WorkerRequestHandler(args *Args, reply *Reply) error {
 		//fmt.Println("[INFO][MASTER] serving request ..")
 		task, ok := <-m.tasksChan //stuck
 		if ok {
-			// if m.phase == IsReduce {
-			// 	fmt.Println("index got ", task.TaskIndex)
-			// }
 			reply.TodoTask = task
-			fmt.Printf("Task number %v from file %v with offset %v taken from queue \n", task.TaskIndex, task.InputFile, task.fileChunk.OffsetStart)
+			// fmt.Printf("Task number %v from file %v with offset %v taken from queue \n", task.TaskIndex, task.InputFile, task.FileChunk.OffsetStart)
 
 			reply.NReduce = m.nReduce
 			reply.NMap = m.nMap
@@ -172,12 +169,12 @@ func (m *Master) addTaskToQueue(taskIndex int) {
 	}
 	if m.phase == IsMap {
 		task.InputFile = m.taskstatus[taskIndex].fileName
-		task.fileChunk = m.taskstatus[taskIndex].chunkInfo
+		task.FileChunk = m.taskstatus[taskIndex].chunkInfo
 	}
 
 	m.tasksChan <- task
 
-	fmt.Printf("Task number %v from file %v with offset %v added to queue \n", task.TaskIndex, task.InputFile, task.fileChunk.OffsetStart)
+	// fmt.Printf("Task number %v from file %v with offset %v added to queue \n", task.TaskIndex, task.InputFile, task.FileChunk.OffsetStart)
 
 
 }
