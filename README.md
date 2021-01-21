@@ -1,4 +1,4 @@
-# 6.824mapreduce
+# MapReduce
 
 This is an implementation of MIT's [MapReduce lab](https://pdos.csail.mit.edu/6.824/labs/lab-mr.html).
 
