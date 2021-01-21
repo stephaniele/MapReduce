@@ -20,7 +20,7 @@ Each worker works on one "task" which is an input file. On a large dataset of un
 
 ### Load Balancing by Chunking
 
-Based on the assumption that if we have uneven input files, the performance would be bad, we implemented a basic load balancer according to [this MapReduce paper](http://static.googleusercontent.com/media/research.google.com/en//archive/mapreduce-osdi04.pdf). The idea is that the load balancer splits input files into even sized chunks, so that each worker can take up similar amounts of work. In this way, the situation where a few workers are waiting for one should be less frequent.
+Based on the assumption that if we have uneven input files, the performance would be bad, we implemented a basic load balancer. The idea is that the load balancer splits input files into even sized chunks, so that each worker can take up similar amounts of work. In this way, the situation where a few workers are waiting for one should be less frequent.
 
 Chunk implementation:
 1. scan the total input files, calculate the sum of the bytes of the input files.
