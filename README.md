@@ -9,7 +9,7 @@ Aside from basic design implementation, we added our own load balancing design t
 
 ## Basic Design
 
-One "master" server contains all tasks contained in a queue. "Worker" servers constantly send requests to master asking for tasks then reporting the results back. If the reply received from the master sets “tasksAllDone” to be true, the worker exits. 
+One "master" server contains all tasks contained in a queue. "Worker" servers constantly send requests to master asking for tasks, then process tasks independently and concurrently, then each reports the results back. If the reply received from the master sets “tasksAllDone” to be true, the worker exits. 
 
 ## Load-Balancing Implementation
 
